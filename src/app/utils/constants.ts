@@ -1,1 +1,1 @@
-export const NGINX_SECURE = "rohittp0/nginx-secure";
+export const NGINX_SECURE = "nocodb/nginx-secure";
