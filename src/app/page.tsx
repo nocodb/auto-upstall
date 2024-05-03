@@ -5,23 +5,41 @@ import {FormEvent, useEffect, useState} from "react";
 import Editor from "@monaco-editor/react";
 import YAML from 'yaml';
 import {convertToAutoUpstall} from "@/app/utils/converter";
+import {useRouter} from "next/navigation";
+import ContainerTable from "@/app/components/ContainerTable";
+import Header from "@/app/components/Header";
 
 export default function Home() {
     const [compose, setCompose] = useState("");
     const [composeYaml, setComposeYaml] = useState({} as Record<string, any>);
-    const [autoUpstall, setAutoUpstall] = useState("");
     const [ssl, setSsl] = useState(false);
-    const [upgrade, setUpgrade] = useState(false);
+    const [upgrades, setUpgrades] = useState<Array<string>>([]);
     const [domain, setDomain] = useState("");
     const [container, setContainer] = useState("");
+    const [exposePort, setExposePort] = useState<number>();
     const [containers, setContainers] = useState<Array<string>>([]);
     const [error, setError] = useState("");
 
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    const router = useRouter();
+
+    const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         try {
-            const convertedObject = convertToAutoUpstall(composeYaml, ssl, domain, container);
-            setAutoUpstall(YAML.stringify(convertedObject));
+            const convertedObject = convertToAutoUpstall(composeYaml, {
+                container,
+                ssl,
+                upgrades,
+                domain,
+                port: exposePort || 80
+            });
+
+            // Send the converted object to the next page as a query parameter
+            const query = new URLSearchParams();
+            query.append("compose", JSON.stringify(convertedObject));
+
+            router.push(`/converted?${query.toString()}`);
         } catch (e) {
             setError(e as string);
         }
@@ -42,95 +60,62 @@ export default function Home() {
     }, [compose]);
 
     return (
-        <main className="flex h-dvh flex-col items-center justify-between pt-8">
-            <h1 className="text-4xl font-bold">AutoUpstall</h1>
-            <p className="text-lg text-center">Docker Compose =&gt; Docker Compose + Auto SSL + Auto Upgrades</p>
-            <div
-                hidden={!error}
-                className="max-w-xs bg-white border border-gray-200 rounded-xl shadow-lg dark:bg-neutral-800 dark:border-neutral-700"
-                role="alert">
-                <div className="flex p-4">
-                    <div className="flex-shrink-0">
-                        <svg className="flex-shrink-0 size-4 text-red-500 mt-0.5" xmlns="http://www.w3.org/2000/svg"
-                             width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path
-                                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"></path>
-                        </svg>
-                    </div>
-                    <div className="ms-3">
-                        <p className="text-sm text-gray-700 dark:text-neutral-400">
-                            {error}
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <main className="flex h-dvh flex-col items-center justify-between pt-8 dark:bg-gray-800 dark:text-white">
+            <Header error={error}/>
             <div className="flex w-full h-full items-center justify-between mt-4">
-                <form className="w-1/2 h-full p-2 px-12 border-r-2" onSubmit={handleSubmit}>
+                <div className="w-1/2 h-full p-2 px-12 border-r-2 dark:border-gray-600">
                     <h2 className="text-xl font-bold">Your Docker Compose</h2>
                     <Editor className="w-full mt-2"
-                            height="66%"
+                            height="95%"
                             value={compose}
                             onChange={(value) => setCompose(value || "")}
                             defaultLanguage="yaml"
+                            theme={darkMode ? 'vs-dark' : 'vs-light'} // Assuming you manage a 'darkMode' state
                     />
-                    <div className="mt-2">
+                </div>
+                <form className="w-1/2 h-full p-2 px-12" onSubmit={handleSubmit}>
+                    <h2 className="text-xl font-bold">Container Configurations</h2>
+                    <ContainerTable
+                        containers={containers}
+                        setContainer={setContainer}
+                        container={container}
+                        setUpgrades={setUpgrades}
+                        upgrades={upgrades}
+                    />
+                    <div className="mt-4">
+                        <label htmlFor="expose" className="dark:text-gray-300">Expose Port</label>
+                        <input type="number"
+                               id="expose"
+                               required
+                               value={exposePort}
+                               onChange={(e) => setExposePort(parseInt(e.target.value))}
+                               className="ml-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white"/>
+                    </div>
+                    <div className="mt-4">
                         <input type="checkbox" value="Auto SSL"
                                id="ssl"
                                checked={ssl}
-                               onChange={(e) => setSsl(e.target.checked)}/>
-                        <label htmlFor="ssl" className="ml-2">Auto SSL</label>
+                               onChange={(e) => setSsl(e.target.checked)}
+                               className="dark:border-gray-600"/>
+                        <label htmlFor="ssl" className="ml-2 dark:text-gray-300">Auto SSL</label>
 
                         <div className="mt-1 ml-5" hidden={!ssl}>
-                            <label htmlFor={"domain"}>Domain</label>
+                            <label htmlFor={"domain"} className="dark:text-gray-300">Domain</label>
                             <input type="text" placeholder="something.yourdomain.com"
                                    id="domain"
                                    required={ssl}
-                                   className="ml-2"
+                                   className="ml-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                                    value={domain}
                                    onChange={(e) => setDomain(e.target.value)}/>
                         </div>
                     </div>
-
-                    <div className="mt-2">
-                        <input type="checkbox" value="Auto Upgrade"
-                               id="upgrade"
-                               checked={upgrade}
-                               onChange={(e) => setUpgrade(e.target.checked)}/>
-                        <label htmlFor="upgrade" className="ml-2">Auto Upgrade</label>
-
-                        <div className="mt-1 ml-5" hidden={!upgrade}>
-                            <label htmlFor="container">Container</label>
-                            <select id="container" required={upgrade} onChange={(e) => setContainer(e.target.value)}>
-                                {containers.map((container, index) => (
-                                    <option key={index} value={container}>{container}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
                     <div className="flex justify-center mt-4 w-full">
-                        <button className="w-32 bg-blue-500 text-white py-1 rounded">
+                        <button
+                            className="w-32 bg-blue-500 text-white py-1 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
                             Convert
                         </button>
                     </div>
                 </form>
-                <div className="w-1/2 h-full p-2 px-12">
-                    <h2 className="text-xl font-bold">AutoUpstall Docker Compose</h2>
-                    <Editor className="w-full mt-2"
-                            defaultLanguage="yaml"
-                            height="80%"
-                            value={autoUpstall}
-                            options={{
-                                readOnly: true
-                            }}
-                    />
-                    <div className="flex justify-center mt-4 w-full">
-                        <button className="w-32 mt-2 bg-blue-500 text-white py-1 rounded"
-                                onClick={() => navigator.clipboard.writeText(autoUpstall)}>
-                            Copy
-                        </button>
-                    </div>
-                </div>
             </div>
         </main>
     );
