@@ -8,6 +8,7 @@ import {convertToAutoUpstall} from "@/app/utils/converter";
 import {useRouter} from "next/navigation";
 import ContainerTable from "@/app/components/ContainerTable";
 import Header from "@/app/components/Header";
+import {toast} from "react-toastify";
 
 export default function Home() {
     const [compose, setCompose] = useState("");
@@ -18,7 +19,6 @@ export default function Home() {
     const [container, setContainer] = useState("");
     const [exposePort, setExposePort] = useState<number>();
     const [containers, setContainers] = useState<Array<string>>([]);
-    const [error, setError] = useState("");
 
     const router = useRouter();
 
@@ -41,7 +41,9 @@ export default function Home() {
 
             router.push(`/converted?${query.toString()}`);
         } catch (e) {
-            setError(e as string);
+            toast.error((e as {message: string}).message, {
+                theme: darkMode ? "dark" : "light"
+            });
         }
     }
 
@@ -55,13 +57,15 @@ export default function Home() {
             const services = Object.keys(yml["services"]);
             setContainers(services);
         } catch (e) {
-            console.error(e);
+            toast.error("Invalid Docker Compose file", {
+                theme: darkMode ? "dark" : "light"
+            });
         }
-    }, [compose]);
+    }, [compose, darkMode]);
 
     return (
         <main className="flex h-dvh flex-col items-center justify-between pt-8 dark:bg-gray-800 dark:text-white">
-            <Header error={error}/>
+            <Header/>
             <div className="flex w-full h-full items-center justify-between mt-4">
                 <div className="w-1/2 h-full p-2 px-12 border-r-2 dark:border-gray-600">
                     <h2 className="text-xl font-bold">Your Docker Compose</h2>
