@@ -82,7 +82,6 @@ export default function Home() {
                     <ContainerTable
                         containers={containers}
                         setContainer={setContainer}
-                        container={container}
                         setUpgrades={setUpgrades}
                         upgrades={upgrades}
                     />

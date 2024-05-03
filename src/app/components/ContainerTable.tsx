@@ -3,10 +3,9 @@ interface ContainerTableProps {
     setContainer: (container: string) => void;
     setUpgrades: (upgrades: string[]) => void;
     upgrades: string[];
-    container: string;
 }
 
-export default function ContainerTable({containers,container,  setContainer, setUpgrades, upgrades}: ContainerTableProps) {
+export default function ContainerTable({containers,  setContainer, setUpgrades, upgrades}: ContainerTableProps) {
     return (
         <div className="relative overflow-x-auto mt-2 h-2/3">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -42,9 +41,9 @@ export default function ContainerTable({containers,container,  setContainer, set
                                    value={ctn}
                                    onChange={(e) => {
                                        if (e.target.checked) {
-                                           setUpgrades([...upgrades, container]);
+                                           setUpgrades([...upgrades, ctn]);
                                        } else {
-                                           setUpgrades(upgrades.filter((upgrade) => upgrade !== container));
+                                           setUpgrades(upgrades.filter((upgrade) => upgrade !== ctn));
                                        }
                                    }}
                             />

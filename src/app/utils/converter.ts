@@ -18,8 +18,11 @@ function verifyConfig(compose: Record<string, any>, config: AutoUpstallConfig) {
     if (!config.container)
         throw "Please select a container";
 
-    if (compose.services[config.container].image.includes("nginx"))
+    if (compose.services[config.container].image?.includes("nginx"))
         throw "Application container must not be Nginx";
+
+    if (config.upgrades.some((upgrade) => !compose.services[upgrade]))
+        throw "Upgraded service does not exist in the Docker Compose file";
 }
 
 function createNginxService(config: AutoUpstallConfig) {
@@ -59,7 +62,7 @@ export function convertToAutoUpstall(composeYaml: Record<string, any>, config: A
 
     if (config.upgrades) {
         config.upgrades.forEach((upgrade) =>
-            !["nginx", "watchtower", "certbot"].includes(upgrade) &&
+            upgrade in composeYaml.services &&
             (composeYaml.services[upgrade].labels = ["com.centurylinklabs.watchtower.enable=true"]));
         composeYaml.services["watchtower"] = createWatchtowerService();
     }
