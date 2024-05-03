@@ -17,7 +17,7 @@ export default function Home() {
     const [upgrades, setUpgrades] = useState<Array<string>>([]);
     const [domain, setDomain] = useState("");
     const [container, setContainer] = useState("");
-    const [exposePort, setExposePort] = useState<number>();
+    const [exposePort, setExposePort] = useState(0);
     const [containers, setContainers] = useState<Array<string>>([]);
 
     const router = useRouter();
@@ -37,11 +37,11 @@ export default function Home() {
 
             // Send the converted object to the next page as a query parameter
             const query = new URLSearchParams();
-            query.append("compose", JSON.stringify(convertedObject));
+            query.append("compose", YAML.stringify(convertedObject));
 
             router.push(`/converted?${query.toString()}`);
         } catch (e) {
-            toast.error((e as {message: string}).message, {
+            toast.error((e as { message: string }).message || String(e), {
                 theme: darkMode ? "dark" : "light"
             });
         }
@@ -86,34 +86,49 @@ export default function Home() {
                         setUpgrades={setUpgrades}
                         upgrades={upgrades}
                     />
-                    <div className="mt-4">
-                        <label htmlFor="expose" className="dark:text-gray-300">Expose Port</label>
-                        <input type="number"
-                               id="expose"
-                               required
-                               value={exposePort}
-                               onChange={(e) => setExposePort(parseInt(e.target.value))}
-                               className="ml-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white"/>
-                    </div>
-                    <div className="mt-4">
-                        <input type="checkbox" value="Auto SSL"
-                               id="ssl"
-                               checked={ssl}
-                               onChange={(e) => setSsl(e.target.checked)}
-                               className="dark:border-gray-600"/>
-                        <label htmlFor="ssl" className="ml-2 dark:text-gray-300">Auto SSL</label>
+                    <div className="mt-4 flex w-full items-center gap-16">
+                        <div className="relative h-10 w-1/4">
+                            <input
+                                className="peer h-full w-full rounded-[7px] border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 dark:border-white dark:!text-white dark:focus:border-white"
+                                placeholder=" "
+                                id="expose"
+                                required
+                                value={exposePort}
+                                onChange={(e) => setExposePort(parseInt(e.target.value) || 0)}
+                            />
+                            <label
+                                className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 dark:!text-white dark:before:border-white dark:after:border-white dark:peer-focus:text-white dark:peer-focus:before:!border-white dark:peer-focus:after:!border-white"
+                            >
+                                Exposed Port
+                            </label>
+                        </div>
 
-                        <div className="mt-1 ml-5" hidden={!ssl}>
-                            <label htmlFor={"domain"} className="dark:text-gray-300">Domain</label>
-                            <input type="text" placeholder="something.yourdomain.com"
-                                   id="domain"
-                                   required={ssl}
-                                   className="ml-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                   value={domain}
-                                   onChange={(e) => setDomain(e.target.value)}/>
+                        <div className="flex items-center">
+                            <input type="checkbox" value="Auto SSL"
+                                   id="ssl"
+                                   checked={ssl}
+                                   onChange={(e) => setSsl(e.target.checked)}
+                                   className="dark:border-gray-600"
+                            />
+                            <label htmlFor="ssl" className="ml-2 dark:text-gray-300">Auto SSL</label>
+
+                            <div className="ml-5 relative h-10" hidden={!ssl}>
+
+                                <input type="text" placeholder=" "
+                                       id="domain"
+                                       required={ssl}
+                                       className="peer h-full w-full rounded-[7px] border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 dark:border-white dark:!text-white dark:focus:border-white"
+                                       value={domain}
+                                       onChange={(e) => setDomain(e.target.value)}/>
+                                <label htmlFor={"domain"}
+                                       className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 dark:!text-white dark:before:border-white dark:after:border-white dark:peer-focus:text-white dark:peer-focus:before:!border-white dark:peer-focus:after:!border-white"
+                                >
+                                    Domain
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex justify-center mt-4 w-full">
+                    <div className="flex justify-center mt-6 w-full">
                         <button
                             className="w-32 bg-blue-500 text-white py-1 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
                             Convert

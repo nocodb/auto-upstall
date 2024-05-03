@@ -18,7 +18,7 @@ function verifyConfig(compose: Record<string, any>, config: AutoUpstallConfig) {
     if (!config.container)
         throw "Please select a container";
 
-    if (compose.services[config.container].image.contains("nginx"))
+    if (compose.services[config.container].image.includes("nginx"))
         throw "Application container must not be Nginx";
 }
 
@@ -50,16 +50,17 @@ export function convertToAutoUpstall(composeYaml: Record<string, any>, config: A
 
     // Remove nginx, watchtower and certbot services if they exist by checking the image name
     const toDelete = Object.keys(composeYaml.services).filter((service) =>
-        composeYaml.services[service].image.contains("nginx") ||
-        composeYaml.services[service].image.contains("certbot") ||
-        composeYaml.services[service].image.contains("watchtower")
+        composeYaml.services[service].image?.includes("nginx") ||
+        composeYaml.services[service].image?.includes("certbot") ||
+        composeYaml.services[service].image?.includes("watchtower")
     );
 
     toDelete.forEach((service) => delete composeYaml.services[service]);
 
     if (config.upgrades) {
         config.upgrades.forEach((upgrade) =>
-            composeYaml.services[upgrade].labels = ["com.centurylinklabs.watchtower.enable=true"]);
+            !["nginx", "watchtower", "certbot"].includes(upgrade) &&
+            (composeYaml.services[upgrade].labels = ["com.centurylinklabs.watchtower.enable=true"]));
         composeYaml.services["watchtower"] = createWatchtowerService();
     }
     composeYaml.services["nginx"] = createNginxService(config);
